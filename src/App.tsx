@@ -852,8 +852,28 @@ function App() {
           <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url(${configs['site.backgroundImage']})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', zIndex: 0, '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, ' + (1 - Number(configs['site.backgroundOpacity'])) + ')' : 'rgba(255, 255, 255, ' + (1 - Number(configs['site.backgroundOpacity'])) + ')', zIndex: 1 } }} />
         )}
 
-        <Container maxWidth='lg' sx={{ py: 4, px: { xs: 2, sm: 3, md: 4 }, position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 5, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 2, sm: 0 } }}>
+        <Container maxWidth='lg' sx={{ pb: 4, px: { xs: 2, sm: 3, md: 4 }, position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          
+          {/* Header 区域 - 设置为 Sticky */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              mb: 5, 
+              flexDirection: { xs: 'column', sm: 'row' }, 
+              gap: { xs: 2, sm: 0 },
+              position: 'sticky', // 关键：粘性定位
+              top: 0,
+              zIndex: 100, // 确保在内容之上
+              py: 2, // 增加垂直内边距
+              mx: -2, px: 2, // 抵消容器内边距（视觉上拉通）
+              backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(10px)', // 毛玻璃效果
+              borderBottom: 1, 
+              borderColor: 'divider',
+            }}
+          >
             <Stack spacing={1} sx={{ mb: { xs: 2, sm: 0 }, textAlign: { xs: 'center', sm: 'left' } }}>
               <Typography variant='h3' component='h1' fontWeight='bold' color='text.primary' sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem', md: '3rem' } }}>{configs['site.name']}</Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, color: 'text.secondary', fontSize: '0.875rem' }}>
@@ -904,25 +924,18 @@ function App() {
           {!loading && !error && (
             <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', minHeight: '100px', flexDirection: { xs: 'column', md: 'row' }, flex: 1 }}>
               {sortMode === SortMode.None && (
-                <Box component='aside' sx={{ width: 180, flexShrink: 0, position: 'sticky', top: 20, display: { xs: 'none', md: 'block' } }}>
+                <Box component='aside' sx={{ width: 180, flexShrink: 0, position: 'sticky', top: 100, display: { xs: 'none', md: 'block' } }}>
                   <Paper elevation={0} sx={{ 
                     bgcolor: 'background.paper', 
                     borderRadius: 2, 
                     border: 1, 
                     borderColor: 'divider',
-                    // 新增滚动条逻辑
-                    maxHeight: 'calc(100vh - 40px)', 
+                    maxHeight: 'calc(100vh - 120px)', // 调整高度，减去标题栏高度
                     overflowY: 'auto',
-                    // 美化滚动条
                     '&::-webkit-scrollbar': { width: '5px' },
                     '&::-webkit-scrollbar-track': { background: 'transparent' },
-                    '&::-webkit-scrollbar-thumb': { 
-                      backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
-                      borderRadius: '10px'
-                    },
-                    '&::-webkit-scrollbar-thumb:hover': {
-                      backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'
-                    }
+                    '&::-webkit-scrollbar-thumb': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', borderRadius: '10px' },
+                    '&::-webkit-scrollbar-thumb:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }
                   }}>
                     <List disablePadding>
                       {filteredGroups.map((group) => (
@@ -953,7 +966,7 @@ function App() {
                   <Stack spacing={5}>
                     {filteredGroups.length > 0 ? (
                       filteredGroups.map((group) => (
-                        <Box key={`group-${group.id}`} id={`group-${group.id}`} sx={{ scrollMarginTop: '20px' }}>
+                        <Box key={`group-${group.id}`} id={`group-${group.id}`} sx={{ scrollMarginTop: '120px' }}> {/* 增加滚动偏移量，防止被标题栏遮挡 */}
                           <GroupCard group={group} sortMode={sortMode === SortMode.None ? 'None' : 'SiteSort'} currentSortingGroupId={currentSortingGroupId} onUpdate={handleSiteUpdate} onDelete={handleSiteDelete} onSaveSiteOrder={handleSaveSiteOrder} onStartSiteSort={startSiteSort} onAddSite={handleOpenAddSite} onUpdateGroup={handleGroupUpdate} onDeleteGroup={handleGroupDelete} configs={configs} />
                         </Box>
                       ))
@@ -966,7 +979,6 @@ function App() {
             </Box>
           )}
 
-          {/* 底部页脚区域 */}
           <Box component="footer" sx={{ mt: 8, py: 3, borderTop: 1, borderColor: 'divider', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: { xs: 'center', sm: 'flex-start' } }}>
               <Typography variant="body2">© {new Date().getFullYear()} {configs['site.name']}</Typography>
