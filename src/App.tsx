@@ -56,7 +56,7 @@ import {
   ListItem,
   ListItemButton,
   InputBase,
-  Chip, // 新增：引入 Chip 组件用于移动端导航
+  Chip,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -1282,7 +1282,8 @@ function App() {
                 gap: 3, // 左侧菜单和右侧内容的间距
                 alignItems: 'flex-start',
                 minHeight: '100px',
-                flexDirection: 'column', // 移动端默认为列布局，下面会针对桌面端改为行布局
+                // 关键修正：只有在移动端(xs)才竖着排，桌面端(md)要横着排(row)
+                flexDirection: { xs: 'column', md: 'row' },
               }}
             >
               {/* --- 左侧侧边栏导航 (仅桌面端显示) --- */}
@@ -1791,75 +1792,6 @@ function App() {
               </Button>
               <Button onClick={handleSaveConfig} variant='contained' color='primary'>
                 保存设置
-              </Button>
-            </DialogActions>
-          </Dialog>
-
-          {/* 导入数据对话框 */}
-          <Dialog
-            open={openImport}
-            onClose={handleCloseImport}
-            maxWidth='sm'
-            fullWidth
-            PaperProps={{
-              sx: {
-                m: { xs: 2, sm: 'auto' },
-                width: { xs: 'calc(100% - 32px)', sm: 'auto' },
-              },
-            }}
-          >
-            <DialogTitle>
-              导入数据
-              <IconButton
-                aria-label='close'
-                onClick={handleCloseImport}
-                sx={{
-                  position: 'absolute',
-                  right: 8,
-                  top: 8,
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </DialogTitle>
-            <DialogContent>
-              <DialogContentText sx={{ mb: 2 }}>
-                请选择要导入的JSON文件，导入将覆盖现有数据。
-              </DialogContentText>
-              <Box sx={{ mb: 2 }}>
-                <Button
-                  variant='outlined'
-                  component='label'
-                  startIcon={<FileUploadIcon />}
-                  sx={{ mb: 2 }}
-                >
-                  选择文件
-                  <input type='file' hidden accept='.json' onChange={handleFileSelect} />
-                </Button>
-                {importFile && (
-                  <Typography variant='body2' sx={{ mt: 1 }}>
-                    已选择: {importFile.name}
-                  </Typography>
-                )}
-              </Box>
-              {importError && (
-                <Alert severity='error' sx={{ mb: 2 }}>
-                  {importError}
-                </Alert>
-              )}
-            </DialogContent>
-            <DialogActions sx={{ px: 3, pb: 3 }}>
-              <Button onClick={handleCloseImport} variant='outlined'>
-                取消
-              </Button>
-              <Button
-                onClick={handleImportData}
-                variant='contained'
-                color='primary'
-                disabled={!importFile || importLoading}
-                startIcon={importLoading ? <CircularProgress size={20} /> : <FileUploadIcon />}
-              >
-                {importLoading ? '导入中...' : '导入'}
               </Button>
             </DialogActions>
           </Dialog>
