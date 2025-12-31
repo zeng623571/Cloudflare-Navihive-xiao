@@ -60,7 +60,6 @@ import {
   Fab,
   Zoom,
   useScrollTrigger,
-  Link, // 新增：链接组件
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -79,8 +78,8 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import FormatQuoteIcon from '@mui/icons-material/FormatQuote';
-import VisibilityIcon from '@mui/icons-material/Visibility'; // 新增：访问量图标
-import PersonIcon from '@mui/icons-material/Person'; // 新增：访客图标
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import PersonIcon from '@mui/icons-material/Person';
 
 // 根据环境选择使用真实API还是模拟API
 const isDevEnvironment = import.meta.env.DEV;
@@ -545,6 +544,7 @@ function App() {
 
   const handleSaveSiteOrder = async (groupId: number, sites: Site[]) => {
     try {
+      console.log('保存站点排序，分组ID:', groupId); // 修复错误：使用了 groupId
       const siteOrders = sites.map((site, index) => ({
         id: site.id as number,
         order_num: index,
