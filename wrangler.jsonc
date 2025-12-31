@@ -5,6 +5,7 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "name": "navihive-xiao",
+"account_id": "0bede43fbca268906a983fed036db18a",
     "main": "worker/index.ts",
     "compatibility_date": "2025-04-05",
     "assets": {
