@@ -55,7 +55,8 @@ import {
   List,
   ListItem,
   ListItemButton,
-  InputBase, // 新增：搜索框输入组件
+  InputBase,
+  Chip, // 新增：引入 Chip 组件用于移动端导航
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -69,7 +70,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import SearchIcon from '@mui/icons-material/Search'; // 新增：搜索图标
+import SearchIcon from '@mui/icons-material/Search';
 
 // 根据环境选择使用真实API还是模拟API
 const isDevEnvironment = import.meta.env.DEV;
@@ -1064,8 +1065,7 @@ function App() {
               {configs['site.name']}
             </Typography>
 
-            {/* --- 新增：聚合搜索框 --- */}
-            {/* 只在宽屏显示，或者根据需要在移动端调整 */}
+            {/* --- 聚合搜索框 --- */}
             <Box
               sx={{
                 flex: 1,
@@ -1086,7 +1086,6 @@ function App() {
                     variant='body2'
                     onClick={() => {
                       setSearchEngine(engine.key);
-                      // 如果切换回站内搜索且之前没内容，可以不清空；如果切换到外部，输入框保留内容方便搜索
                     }}
                     sx={{
                       cursor: 'pointer',
@@ -1132,7 +1131,6 @@ function App() {
                   } 中搜索...`}
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
-                  // 站内搜索时，输入即触发过滤（不需要按回车）
                 />
                 <IconButton type='submit' sx={{ p: '10px' }} aria-label='search'>
                   <SearchIcon />
@@ -1284,10 +1282,10 @@ function App() {
                 gap: 3, // 左侧菜单和右侧内容的间距
                 alignItems: 'flex-start',
                 minHeight: '100px',
+                flexDirection: 'column', // 移动端默认为列布局，下面会针对桌面端改为行布局
               }}
             >
-              {/* --- 左侧侧边栏导航 --- */}
-              {/* 仅在普通模式下显示，排序模式下隐藏以免干扰拖拽，且仅在宽屏显示 */}
+              {/* --- 左侧侧边栏导航 (仅桌面端显示) --- */}
               {sortMode === SortMode.None && (
                 <Box
                   component='aside'
@@ -1296,7 +1294,7 @@ function App() {
                     flexShrink: 0,
                     position: 'sticky',
                     top: 20, // 距离顶部的吸附距离
-                    display: { xs: 'none', md: 'block' }, // 手机端隐藏
+                    display: { xs: 'none', md: 'block' }, // 移动端隐藏
                   }}
                 >
                   <Paper
@@ -1310,7 +1308,6 @@ function App() {
                     }}
                   >
                     <List disablePadding>
-                      {/* 如果有过滤结果，显示过滤后的分组；否则显示全部分组 */}
                       {filteredGroups.map((group) => (
                         <ListItem key={group.id} disablePadding>
                           <ListItemButton
@@ -1332,7 +1329,6 @@ function App() {
                           </ListItemButton>
                         </ListItem>
                       ))}
-                      {/* 如果搜索无结果 */}
                       {searchEngine === 'site' && searchKeyword && filteredGroups.length === 0 && (
                         <ListItem>
                           <ListItemText
@@ -1352,6 +1348,43 @@ function App() {
 
               {/* --- 内容区域 (右侧) --- */}
               <Box component='main' sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+                {/* --- 移动端：横向滚动导航栏 (新增) --- */}
+                {sortMode === SortMode.None && (
+                  <Box
+                    sx={{
+                      display: { xs: 'flex', md: 'none' }, // 仅移动端显示
+                      overflowX: 'auto', // 允许横向滚动
+                      gap: 1,
+                      py: 1,
+                      mb: 2,
+                      position: 'sticky', // 吸附效果
+                      top: 0,
+                      zIndex: 10,
+                      bgcolor: 'background.default', // 保持背景一致
+                      // 隐藏滚动条
+                      '::-webkit-scrollbar': { display: 'none' },
+                      scrollbarWidth: 'none',
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    {filteredGroups.map((group) => (
+                      <Chip
+                        key={group.id}
+                        label={group.name}
+                        component='a'
+                        href={`#group-${group.id}`}
+                        clickable
+                        color='default'
+                        variant='outlined'
+                        onClick={() => {
+                          // 点击后让它自然跳转锚点
+                        }}
+                      />
+                    ))}
+                  </Box>
+                )}
+
                 {sortMode === SortMode.GroupSort ? (
                   <DndContext
                     sensors={sensors}
