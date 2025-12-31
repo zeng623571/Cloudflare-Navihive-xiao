@@ -52,10 +52,10 @@ import {
   Snackbar,
   InputAdornment,
   Slider,
-  // 新增的列表组件引用
   List,
   ListItem,
   ListItemButton,
+  InputBase, // 新增：搜索框输入组件
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -69,6 +69,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import SearchIcon from '@mui/icons-material/Search'; // 新增：搜索图标
 
 // 根据环境选择使用真实API还是模拟API
 const isDevEnvironment = import.meta.env.DEV;
@@ -85,6 +86,15 @@ enum SortMode {
   GroupSort, // 分组排序
   SiteSort, // 站点排序
 }
+
+// 搜索引擎配置
+const SEARCH_ENGINES = [
+  { key: 'google', name: 'Google', url: 'https://www.google.com/search?q=' },
+  { key: 'baidu', name: '百度', url: 'https://www.baidu.com/s?wd=' },
+  { key: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q=' },
+  { key: 'github', name: 'Github', url: 'https://github.com/search?q=' },
+  { key: 'site', name: '站内', url: '' },
+];
 
 // 辅助函数：提取域名
 function extractDomain(url: string): string | null {
@@ -148,6 +158,10 @@ function App() {
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
   const [currentSortingGroupId, setCurrentSortingGroupId] = useState<number | null>(null);
 
+  // 搜索相关状态
+  const [searchEngine, setSearchEngine] = useState('google');
+  const [searchKeyword, setSearchKeyword] = useState('');
+
   // 新增认证状态
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAuthRequired, setIsAuthRequired] = useState(false);
@@ -209,6 +223,47 @@ function App() {
   // 导入结果提示框状态
   const [importResultOpen, setImportResultOpen] = useState(false);
   const [importResultMessage, setImportResultMessage] = useState('');
+
+  // 计算过滤后的分组（用于站内搜索）
+  const filteredGroups = useMemo(() => {
+    // 只有在选择"站内"搜索且有关键词时才过滤
+    if (searchEngine === 'site' && searchKeyword.trim()) {
+      const lowerKeyword = searchKeyword.toLowerCase().trim();
+      return groups
+        .map((group) => {
+          // 过滤该分组下的站点
+          const matchingSites = group.sites.filter(
+            (site) =>
+              site.name.toLowerCase().includes(lowerKeyword) ||
+              site.url.toLowerCase().includes(lowerKeyword) ||
+              (site.description && site.description.toLowerCase().includes(lowerKeyword))
+          );
+          // 如果分组名匹配，或者该分组下有匹配的站点，则保留该分组
+          if (group.name.toLowerCase().includes(lowerKeyword) || matchingSites.length > 0) {
+            return {
+              ...group,
+              sites: matchingSites, // 只显示匹配的站点
+            };
+          }
+          return null;
+        })
+        .filter((group): group is GroupWithSites => group !== null);
+    }
+    // 否则返回原始数据
+    return groups;
+  }, [groups, searchEngine, searchKeyword]);
+
+  // 处理搜索提交
+  const handleSearch = () => {
+    if (!searchKeyword.trim()) return;
+
+    const engine = SEARCH_ENGINES.find((e) => e.key === searchEngine);
+    if (engine && engine.key !== 'site') {
+      // 外部搜索引擎，打开新窗口
+      window.open(engine.url + encodeURIComponent(searchKeyword), '_blank');
+    }
+    // 站内搜索由 filteredGroups 自动处理
+  };
 
   // 菜单打开关闭
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -1003,10 +1058,88 @@ function App() {
               sx={{
                 fontSize: { xs: '1.75rem', sm: '2.125rem', md: '3rem' },
                 textAlign: { xs: 'center', sm: 'left' },
+                mb: { xs: 2, sm: 0 }, // 移动端底部留白
               }}
             >
               {configs['site.name']}
             </Typography>
+
+            {/* --- 新增：聚合搜索框 --- */}
+            {/* 只在宽屏显示，或者根据需要在移动端调整 */}
+            <Box
+              sx={{
+                flex: 1,
+                maxWidth: 600,
+                width: '100%', // 移动端全宽
+                mx: { xs: 0, sm: 4 }, // 桌面端左右留白
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+                mb: { xs: 2, sm: 0 }, // 移动端底部留白
+              }}
+            >
+              {/* 顶部标签页 */}
+              <Stack direction='row' spacing={2} sx={{ pl: 1, overflowX: 'auto' }}>
+                {SEARCH_ENGINES.map((engine) => (
+                  <Typography
+                    key={engine.key}
+                    variant='body2'
+                    onClick={() => {
+                      setSearchEngine(engine.key);
+                      // 如果切换回站内搜索且之前没内容，可以不清空；如果切换到外部，输入框保留内容方便搜索
+                    }}
+                    sx={{
+                      cursor: 'pointer',
+                      fontWeight: searchEngine === engine.key ? 'bold' : 'normal',
+                      color: searchEngine === engine.key ? 'primary.main' : 'text.secondary',
+                      borderBottom: searchEngine === engine.key ? '2px solid' : 'none',
+                      borderColor: 'primary.main',
+                      pb: 0.5,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {engine.name}
+                  </Typography>
+                ))}
+              </Stack>
+
+              {/* 搜索输入框 */}
+              <Paper
+                component='form'
+                elevation={1}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSearch();
+                }}
+                sx={{
+                  p: '2px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: 5, // 圆角胶囊样式
+                  bgcolor: 'background.paper',
+                  border: 1,
+                  borderColor: 'divider',
+                  transition: 'box-shadow 0.3s',
+                  '&:hover': {
+                    boxShadow: 3,
+                  },
+                }}
+              >
+                <InputBase
+                  sx={{ ml: 2, flex: 1 }}
+                  placeholder={`在 ${
+                    SEARCH_ENGINES.find((e) => e.key === searchEngine)?.name
+                  } 中搜索...`}
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  // 站内搜索时，输入即触发过滤（不需要按回车）
+                />
+                <IconButton type='submit' sx={{ p: '10px' }} aria-label='search'>
+                  <SearchIcon />
+                </IconButton>
+              </Paper>
+            </Box>
+
             <Stack
               direction={{ xs: 'row', sm: 'row' }}
               spacing={{ xs: 1, sm: 2 }}
@@ -1153,11 +1286,11 @@ function App() {
                 minHeight: '100px',
               }}
             >
-              {/* --- 新增：左侧侧边栏导航 --- */}
+              {/* --- 左侧侧边栏导航 --- */}
               {/* 仅在普通模式下显示，排序模式下隐藏以免干扰拖拽，且仅在宽屏显示 */}
               {sortMode === SortMode.None && (
                 <Box
-                  component="aside"
+                  component='aside'
                   sx={{
                     width: 180, // 侧边栏宽度
                     flexShrink: 0,
@@ -1177,10 +1310,11 @@ function App() {
                     }}
                   >
                     <List disablePadding>
-                      {groups.map((group) => (
+                      {/* 如果有过滤结果，显示过滤后的分组；否则显示全部分组 */}
+                      {filteredGroups.map((group) => (
                         <ListItem key={group.id} disablePadding>
                           <ListItemButton
-                            component="a"
+                            component='a'
                             href={`#group-${group.id}`}
                             sx={{
                               py: 1.5,
@@ -1198,13 +1332,26 @@ function App() {
                           </ListItemButton>
                         </ListItem>
                       ))}
+                      {/* 如果搜索无结果 */}
+                      {searchEngine === 'site' && searchKeyword && filteredGroups.length === 0 && (
+                        <ListItem>
+                          <ListItemText
+                            primary='无匹配结果'
+                            primaryTypographyProps={{
+                              fontSize: '0.8rem',
+                              color: 'text.secondary',
+                              align: 'center',
+                            }}
+                          />
+                        </ListItem>
+                      )}
                     </List>
                   </Paper>
                 </Box>
               )}
 
-              {/* --- 原本的内容区域 (右侧) --- */}
-              <Box component="main" sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+              {/* --- 内容区域 (右侧) --- */}
+              <Box component='main' sx={{ flex: 1, minWidth: 0, width: '100%' }}>
                 {sortMode === SortMode.GroupSort ? (
                   <DndContext
                     sensors={sensors}
@@ -1235,28 +1382,37 @@ function App() {
                   </DndContext>
                 ) : (
                   <Stack spacing={5}>
-                    {groups.map((group) => (
-                      /* 给每个分组添加 ID 锚点，以便侧边栏跳转 */
-                      <Box
-                        key={`group-${group.id}`}
-                        id={`group-${group.id}`}
-                        sx={{ scrollMarginTop: '20px' }}
-                      >
-                        <GroupCard
-                          group={group}
-                          sortMode={sortMode === SortMode.None ? 'None' : 'SiteSort'}
-                          currentSortingGroupId={currentSortingGroupId}
-                          onUpdate={handleSiteUpdate}
-                          onDelete={handleSiteDelete}
-                          onSaveSiteOrder={handleSaveSiteOrder}
-                          onStartSiteSort={startSiteSort}
-                          onAddSite={handleOpenAddSite}
-                          onUpdateGroup={handleGroupUpdate}
-                          onDeleteGroup={handleGroupDelete}
-                          configs={configs}
-                        />
+                    {/* 使用 filteredGroups 进行渲染，实现站内搜索过滤 */}
+                    {filteredGroups.length > 0 ? (
+                      filteredGroups.map((group) => (
+                        <Box
+                          key={`group-${group.id}`}
+                          id={`group-${group.id}`}
+                          sx={{ scrollMarginTop: '20px' }}
+                        >
+                          <GroupCard
+                            group={group}
+                            sortMode={sortMode === SortMode.None ? 'None' : 'SiteSort'}
+                            currentSortingGroupId={currentSortingGroupId}
+                            onUpdate={handleSiteUpdate}
+                            onDelete={handleSiteDelete}
+                            onSaveSiteOrder={handleSaveSiteOrder}
+                            onStartSiteSort={startSiteSort}
+                            onAddSite={handleOpenAddSite}
+                            onUpdateGroup={handleGroupUpdate}
+                            onDeleteGroup={handleGroupDelete}
+                            configs={configs}
+                          />
+                        </Box>
+                      ))
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 5, color: 'text.secondary' }}>
+                        <Typography variant='h6'>没有找到匹配的内容</Typography>
+                        {searchEngine === 'site' && (
+                          <Typography variant='body2'>请尝试使用其他关键词</Typography>
+                        )}
                       </Box>
-                    ))}
+                    )}
                   </Stack>
                 )}
               </Box>
