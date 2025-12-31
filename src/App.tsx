@@ -52,6 +52,10 @@ import {
   Snackbar,
   InputAdornment,
   Slider,
+  // 新增的列表组件引用
+  List,
+  ListItem,
+  ListItemButton,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -108,7 +112,7 @@ const DEFAULT_CONFIGS = {
   'site.customCss': '',
   'site.backgroundImage': '', // 背景图片URL
   'site.backgroundOpacity': '0.15', // 背景蒙版透明度
-  'site.iconApi': 'https://www.faviconextractor.com/favicon/{domain}?larger=true', // 默认使用的API接口，带上 ?larger=true 参数可以获取最大尺寸的图标
+  'site.iconApi': 'https://www.faviconextractor.com/favicon/{domain}?larger=true', // 默认使用的API接口
 };
 
 function App() {
@@ -1143,54 +1147,119 @@ function App() {
           {!loading && !error && (
             <Box
               sx={{
-                '& > *': { mb: 5 },
+                display: 'flex',
+                gap: 3, // 左侧菜单和右侧内容的间距
+                alignItems: 'flex-start',
                 minHeight: '100px',
               }}
             >
-              {sortMode === SortMode.GroupSort ? (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
+              {/* --- 新增：左侧侧边栏导航 --- */}
+              {/* 仅在普通模式下显示，排序模式下隐藏以免干扰拖拽，且仅在宽屏显示 */}
+              {sortMode === SortMode.None && (
+                <Box
+                  component="aside"
+                  sx={{
+                    width: 180, // 侧边栏宽度
+                    flexShrink: 0,
+                    position: 'sticky',
+                    top: 20, // 距离顶部的吸附距离
+                    display: { xs: 'none', md: 'block' }, // 手机端隐藏
+                  }}
                 >
-                  <SortableContext
-                    items={groups.map((group) => group.id.toString())}
-                    strategy={verticalListSortingStrategy}
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      bgcolor: 'background.paper',
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      border: 1,
+                      borderColor: 'divider',
+                    }}
                   >
-                    <Stack
-                      spacing={2}
-                      sx={{
-                        '& > *': {
-                          transition: 'none',
-                        },
-                      }}
-                    >
+                    <List disablePadding>
                       {groups.map((group) => (
-                        <SortableGroupItem key={group.id} id={group.id.toString()} group={group} />
+                        <ListItem key={group.id} disablePadding>
+                          <ListItemButton
+                            component="a"
+                            href={`#group-${group.id}`}
+                            sx={{
+                              py: 1.5,
+                              '&:hover': { bgcolor: 'action.hover' },
+                            }}
+                          >
+                            <ListItemText
+                              primary={group.name}
+                              primaryTypographyProps={{
+                                fontSize: '0.9rem',
+                                fontWeight: 500,
+                                noWrap: true,
+                              }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
                       ))}
-                    </Stack>
-                  </SortableContext>
-                </DndContext>
-              ) : (
-                <Stack spacing={5}>
-                  {groups.map((group) => (
-                    <GroupCard
-                      key={`group-${group.id}`}
-                      group={group}
-                      sortMode={sortMode === SortMode.None ? 'None' : 'SiteSort'}
-                      currentSortingGroupId={currentSortingGroupId}
-                      onUpdate={handleSiteUpdate}
-                      onDelete={handleSiteDelete}
-                      onSaveSiteOrder={handleSaveSiteOrder}
-                      onStartSiteSort={startSiteSort}
-                      onAddSite={handleOpenAddSite}
-                      onUpdateGroup={handleGroupUpdate}
-                      onDeleteGroup={handleGroupDelete}
-                      configs={configs}
-                    />
-                  ))}
-                </Stack>
+                    </List>
+                  </Paper>
+                </Box>
               )}
+
+              {/* --- 原本的内容区域 (右侧) --- */}
+              <Box component="main" sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+                {sortMode === SortMode.GroupSort ? (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={groups.map((group) => group.id.toString())}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <Stack
+                        spacing={2}
+                        sx={{
+                          '& > *': {
+                            transition: 'none',
+                          },
+                        }}
+                      >
+                        {groups.map((group) => (
+                          <SortableGroupItem
+                            key={group.id}
+                            id={group.id.toString()}
+                            group={group}
+                          />
+                        ))}
+                      </Stack>
+                    </SortableContext>
+                  </DndContext>
+                ) : (
+                  <Stack spacing={5}>
+                    {groups.map((group) => (
+                      /* 给每个分组添加 ID 锚点，以便侧边栏跳转 */
+                      <Box
+                        key={`group-${group.id}`}
+                        id={`group-${group.id}`}
+                        sx={{ scrollMarginTop: '20px' }}
+                      >
+                        <GroupCard
+                          group={group}
+                          sortMode={sortMode === SortMode.None ? 'None' : 'SiteSort'}
+                          currentSortingGroupId={currentSortingGroupId}
+                          onUpdate={handleSiteUpdate}
+                          onDelete={handleSiteDelete}
+                          onSaveSiteOrder={handleSaveSiteOrder}
+                          onStartSiteSort={startSiteSort}
+                          onAddSite={handleOpenAddSite}
+                          onUpdateGroup={handleGroupUpdate}
+                          onDeleteGroup={handleGroupDelete}
+                          configs={configs}
+                        />
+                      </Box>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
             </Box>
           )}
 
