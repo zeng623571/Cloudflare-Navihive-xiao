@@ -57,6 +57,9 @@ import {
   ListItemButton,
   InputBase,
   Chip,
+  Fab, // 新增：悬浮按钮
+  Zoom, // 新增：缩放动画
+  useScrollTrigger, // 新增：滚动监听
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -71,6 +74,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import SearchIcon from '@mui/icons-material/Search';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'; // 新增：向上箭头图标
 
 // 根据环境选择使用真实API还是模拟API
 const isDevEnvironment = import.meta.env.DEV;
@@ -224,6 +228,26 @@ function App() {
   // 导入结果提示框状态
   const [importResultOpen, setImportResultOpen] = useState(false);
   const [importResultMessage, setImportResultMessage] = useState('');
+
+  // 滚动触发器：用于判断是否显示回到顶部按钮
+  const scrollTrigger = useScrollTrigger({
+    disableHysteresis: true,
+    threshold: 100, // 滚动超过 100px 时显示
+  });
+
+  // 回到顶部点击事件
+  const handleScrollTop = (event: React.MouseEvent<HTMLDivElement>) => {
+    const anchor = (
+      (event.target as HTMLDivElement).ownerDocument || document
+    ).querySelector('#back-to-top-anchor');
+
+    if (anchor) {
+      anchor.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth', // 平滑滚动
+      });
+    }
+  };
 
   // 计算过滤后的分组（用于站内搜索）
   const filteredGroups = useMemo(() => {
@@ -944,6 +968,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      
+      {/* 新增：回到顶部锚点 */}
+      <div id="back-to-top-anchor" />
 
       {/* 错误提示 Snackbar */}
       <Snackbar
@@ -1864,6 +1891,28 @@ function App() {
               </Button>
             </DialogActions>
           </Dialog>
+
+          {/* 新增：回到顶部按钮 */}
+          <Zoom in={scrollTrigger}>
+            <Box
+              onClick={handleScrollTop}
+              role="presentation"
+              sx={{
+                position: 'fixed',
+                bottom: 80, // 稍微比 GitHub 图标高一点，避免遮挡
+                right: 16,
+                zIndex: 11, // 确保在 GitHub 图标之上
+              }}
+            >
+              <Fab
+                color="primary"
+                size="small"
+                aria-label="scroll back to top"
+              >
+                <KeyboardArrowUpIcon />
+              </Fab>
+            </Box>
+          </Zoom>
 
           {/* GitHub角标 - 在移动端调整位置 */}
           <Box
