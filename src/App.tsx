@@ -544,7 +544,7 @@ function App() {
 
   const handleSaveSiteOrder = async (groupId: number, sites: Site[]) => {
     try {
-      console.log('保存站点排序，分组ID:', groupId); // 修复错误：使用了 groupId
+      console.log('保存站点排序，分组ID:', groupId);
       const siteOrders = sites.map((site, index) => ({
         id: site.id as number,
         order_num: index,
@@ -905,7 +905,25 @@ function App() {
             <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', minHeight: '100px', flexDirection: { xs: 'column', md: 'row' }, flex: 1 }}>
               {sortMode === SortMode.None && (
                 <Box component='aside' sx={{ width: 180, flexShrink: 0, position: 'sticky', top: 20, display: { xs: 'none', md: 'block' } }}>
-                  <Paper elevation={0} sx={{ bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
+                  <Paper elevation={0} sx={{ 
+                    bgcolor: 'background.paper', 
+                    borderRadius: 2, 
+                    border: 1, 
+                    borderColor: 'divider',
+                    // 新增滚动条逻辑
+                    maxHeight: 'calc(100vh - 40px)', 
+                    overflowY: 'auto',
+                    // 美化滚动条
+                    '&::-webkit-scrollbar': { width: '5px' },
+                    '&::-webkit-scrollbar-track': { background: 'transparent' },
+                    '&::-webkit-scrollbar-thumb': { 
+                      backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+                      borderRadius: '10px'
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                      backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'
+                    }
+                  }}>
                     <List disablePadding>
                       {filteredGroups.map((group) => (
                         <ListItem key={group.id} disablePadding>
@@ -948,7 +966,7 @@ function App() {
             </Box>
           )}
 
-          {/* 新增：底部页脚区域 */}
+          {/* 底部页脚区域 */}
           <Box component="footer" sx={{ mt: 8, py: 3, borderTop: 1, borderColor: 'divider', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', gap: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: { xs: 'center', sm: 'flex-start' } }}>
               <Typography variant="body2">© {new Date().getFullYear()} {configs['site.name']}</Typography>
