@@ -57,9 +57,9 @@ import {
   ListItemButton,
   InputBase,
   Chip,
-  Fab, // 新增：悬浮按钮
-  Zoom, // 新增：缩放动画
-  useScrollTrigger, // 新增：滚动监听
+  Fab,
+  Zoom,
+  useScrollTrigger,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -74,7 +74,10 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import SearchIcon from '@mui/icons-material/Search';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'; // 新增：向上箭头图标
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import AccessTimeIcon from '@mui/icons-material/AccessTime'; // 新增图标
+import WbSunnyIcon from '@mui/icons-material/WbSunny'; // 新增图标
+import FormatQuoteIcon from '@mui/icons-material/FormatQuote'; // 新增图标
 
 // 根据环境选择使用真实API还是模拟API
 const isDevEnvironment = import.meta.env.DEV;
@@ -167,6 +170,11 @@ function App() {
   const [searchEngine, setSearchEngine] = useState('google');
   const [searchKeyword, setSearchKeyword] = useState('');
 
+  // 仪表盘信息状态 (日期、一言、天气)
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [hitokoto, setHitokoto] = useState('生活明朗，万物可爱');
+  const [weather, setWeather] = useState('');
+
   // 新增认证状态
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAuthRequired, setIsAuthRequired] = useState(false);
@@ -229,13 +237,12 @@ function App() {
   const [importResultOpen, setImportResultOpen] = useState(false);
   const [importResultMessage, setImportResultMessage] = useState('');
 
-  // 滚动触发器：用于判断是否显示回到顶部按钮
+  // 滚动触发器
   const scrollTrigger = useScrollTrigger({
     disableHysteresis: true,
-    threshold: 100, // 滚动超过 100px 时显示
+    threshold: 100,
   });
 
-  // 回到顶部点击事件
   const handleScrollTop = (event: React.MouseEvent<HTMLDivElement>) => {
     const anchor = (
       (event.target as HTMLDivElement).ownerDocument || document
@@ -244,10 +251,55 @@ function App() {
     if (anchor) {
       anchor.scrollIntoView({
         block: 'center',
-        behavior: 'smooth', // 平滑滚动
+        behavior: 'smooth',
       });
     }
   };
+
+  // 初始化加载：日期、一言、天气
+  useEffect(() => {
+    // 1. 启动时钟
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+
+    // 2. 获取一言
+    fetch('https://v1.hitokoto.cn/?c=i&c=d&c=k') // 选取 诗词、文学、哲学类
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.hitokoto) {
+          setHitokoto(data.hitokoto);
+        }
+      })
+      .catch((e) => console.error('Hitokoto fetch failed', e));
+
+    // 3. 获取简单天气 (使用 wttr.in 的简洁格式)
+    // 格式 3: Location: ⛅️ +25°C
+    fetch('https://wttr.in/?format=3')
+      .then((res) => {
+        if (res.ok) return res.text();
+        throw new Error('Weather request failed');
+      })
+      .then((text) => {
+        // 清理一下文本，去掉多余的空格
+        setWeather(text.trim());
+      })
+      .catch((e) => {
+        console.error('Weather fetch failed', e);
+        // 如果失败，留空或显示默认
+      });
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // 格式化日期显示
+  const formattedDate = useMemo(() => {
+    const date = currentTime;
+    const dateStr = date.toLocaleDateString('zh-CN', {
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long',
+    });
+    return dateStr;
+  }, [currentTime]);
 
   // 计算过滤后的分组（用于站内搜索）
   const filteredGroups = useMemo(() => {
@@ -969,7 +1021,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       
-      {/* 新增：回到顶部锚点 */}
+      {/* 回到顶部锚点 */}
       <div id="back-to-top-anchor" />
 
       {/* 错误提示 Snackbar */}
@@ -1078,19 +1130,48 @@ function App() {
               gap: { xs: 2, sm: 0 },
             }}
           >
-            <Typography
-              variant='h3'
-              component='h1'
-              fontWeight='bold'
-              color='text.primary'
-              sx={{
-                fontSize: { xs: '1.75rem', sm: '2.125rem', md: '3rem' },
-                textAlign: { xs: 'center', sm: 'left' },
-                mb: { xs: 2, sm: 0 }, // 移动端底部留白
-              }}
-            >
-              {configs['site.name']}
-            </Typography>
+            {/* 标题区域：改为 Stack 布局，包含标题和日期/一言 */}
+            <Stack spacing={1} sx={{ mb: { xs: 2, sm: 0 }, textAlign: { xs: 'center', sm: 'left' } }}>
+              <Typography
+                variant='h3'
+                component='h1'
+                fontWeight='bold'
+                color='text.primary'
+                sx={{
+                  fontSize: { xs: '1.75rem', sm: '2.125rem', md: '3rem' },
+                }}
+              >
+                {configs['site.name']}
+              </Typography>
+              
+              {/* 信息栏：日期 + 天气 + 一言 */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 0.5,
+                  color: 'text.secondary',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <AccessTimeIcon sx={{ fontSize: 16 }} />
+                    <span>{formattedDate}</span>
+                  </Box>
+                  {weather && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <WbSunnyIcon sx={{ fontSize: 16 }} />
+                      <span>{weather}</span>
+                    </Box>
+                  )}
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
+                  <FormatQuoteIcon sx={{ fontSize: 16, transform: 'rotate(180deg)' }} />
+                  <span style={{ fontStyle: 'italic', opacity: 0.8 }}>{hitokoto}</span>
+                </Box>
+              </Box>
+            </Stack>
 
             {/* --- 聚合搜索框 --- */}
             <Box
