@@ -544,7 +544,8 @@ function App() {
 
   const handleSaveSiteOrder = async (groupId: number, sites: Site[]) => {
     try {
-      console.log('保存站点排序，分组ID:', groupId);
+      // 修复：确保使用了 groupId，避免 TS 报错
+      console.log('正在保存分组ID为', groupId, '的站点排序'); 
       const siteOrders = sites.map((site, index) => ({
         id: site.id as number,
         order_num: index,
@@ -847,14 +848,15 @@ function App() {
         <Alert onClose={() => setImportResultOpen(false)} severity='success' variant='filled' sx={{ width: '100%', whiteSpace: 'pre-line', backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#2e7d32' : undefined), color: (theme) => (theme.palette.mode === 'dark' ? '#fff' : undefined), '& .MuiAlert-icon': { color: (theme) => (theme.palette.mode === 'dark' ? '#fff' : undefined) } }}>{importResultMessage}</Alert>
       </Snackbar>
 
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary', transition: 'all 0.3s ease-in-out', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Root Box: 去掉 overflow: hidden，确保可以正常滚动 */}
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary', transition: 'all 0.3s ease-in-out', position: 'relative', display: 'flex', flexDirection: 'column' }}>
         {configs['site.backgroundImage'] && (
           <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: `url(${configs['site.backgroundImage']})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat', zIndex: 0, '&::before': { content: '""', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, ' + (1 - Number(configs['site.backgroundOpacity'])) + ')' : 'rgba(255, 255, 255, ' + (1 - Number(configs['site.backgroundOpacity'])) + ')', zIndex: 1 } }} />
         )}
 
         <Container maxWidth='lg' sx={{ pb: 4, px: { xs: 2, sm: 3, md: 4 }, position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
           
-          {/* Header 区域 - 设置为 Sticky */}
+          {/* Header: 固定在顶部，增加毛玻璃效果 */}
           <Box 
             sx={{ 
               display: 'flex', 
@@ -863,13 +865,13 @@ function App() {
               mb: 5, 
               flexDirection: { xs: 'column', sm: 'row' }, 
               gap: { xs: 2, sm: 0 },
-              position: 'sticky', // 关键：粘性定位
+              position: 'sticky', 
               top: 0,
-              zIndex: 100, // 确保在内容之上
-              py: 2, // 增加垂直内边距
-              mx: -2, px: 2, // 抵消容器内边距（视觉上拉通）
+              zIndex: 1000, 
+              py: 2,
+              mx: -2, px: 2,
               backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-              backdropFilter: 'blur(10px)', // 毛玻璃效果
+              backdropFilter: 'blur(10px)',
               borderBottom: 1, 
               borderColor: 'divider',
             }}
@@ -923,19 +925,30 @@ function App() {
 
           {!loading && !error && (
             <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', minHeight: '100px', flexDirection: { xs: 'column', md: 'row' }, flex: 1 }}>
+              
+              {/* Sidebar: 固定在左侧，内部独立滚动 */}
               {sortMode === SortMode.None && (
-                <Box component='aside' sx={{ width: 180, flexShrink: 0, position: 'sticky', top: 100, display: { xs: 'none', md: 'block' } }}>
+                <Box component='aside' sx={{ 
+                  width: 180, 
+                  flexShrink: 0, 
+                  position: 'sticky', 
+                  top: 130, // 距离顶部 130px，留给 Header
+                  alignSelf: 'flex-start', // 关键：确保侧边栏不会被拉伸
+                  maxHeight: 'calc(100vh - 150px)', // 限制高度，确保底部不被遮挡
+                  overflowY: 'auto', // 开启垂直滚动
+                  display: { xs: 'none', md: 'block' },
+                  // 滚动条样式美化
+                  '&::-webkit-scrollbar': { width: '5px' },
+                  '&::-webkit-scrollbar-track': { background: 'transparent' },
+                  '&::-webkit-scrollbar-thumb': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', borderRadius: '10px' },
+                  '&::-webkit-scrollbar-thumb:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }
+                }}>
                   <Paper elevation={0} sx={{ 
                     bgcolor: 'background.paper', 
                     borderRadius: 2, 
                     border: 1, 
                     borderColor: 'divider',
-                    maxHeight: 'calc(100vh - 120px)', // 调整高度，减去标题栏高度
-                    overflowY: 'auto',
-                    '&::-webkit-scrollbar': { width: '5px' },
-                    '&::-webkit-scrollbar-track': { background: 'transparent' },
-                    '&::-webkit-scrollbar-thumb': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', borderRadius: '10px' },
-                    '&::-webkit-scrollbar-thumb:hover': { backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)' }
+                    overflow: 'hidden'
                   }}>
                     <List disablePadding>
                       {filteredGroups.map((group) => (
@@ -966,7 +979,7 @@ function App() {
                   <Stack spacing={5}>
                     {filteredGroups.length > 0 ? (
                       filteredGroups.map((group) => (
-                        <Box key={`group-${group.id}`} id={`group-${group.id}`} sx={{ scrollMarginTop: '120px' }}> {/* 增加滚动偏移量，防止被标题栏遮挡 */}
+                        <Box key={`group-${group.id}`} id={`group-${group.id}`} sx={{ scrollMarginTop: '130px' }}> {/* 增加滚动偏移量，防止标题遮挡内容 */}
                           <GroupCard group={group} sortMode={sortMode === SortMode.None ? 'None' : 'SiteSort'} currentSortingGroupId={currentSortingGroupId} onUpdate={handleSiteUpdate} onDelete={handleSiteDelete} onSaveSiteOrder={handleSaveSiteOrder} onStartSiteSort={startSiteSort} onAddSite={handleOpenAddSite} onUpdateGroup={handleGroupUpdate} onDeleteGroup={handleGroupDelete} configs={configs} />
                         </Box>
                       ))
@@ -1023,7 +1036,7 @@ function App() {
           <Dialog open={openImport} onClose={handleCloseImport} maxWidth='sm' fullWidth PaperProps={{ sx: { m: { xs: 2, sm: 'auto' }, width: { xs: 'calc(100% - 32px)', sm: 'auto' } } }}>
             <DialogTitle>导入数据<IconButton aria-label='close' onClick={handleCloseImport} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
             <DialogContent><DialogContentText sx={{ mb: 2 }}>请选择要导入的JSON文件，导入将覆盖现有数据。</DialogContentText><Box sx={{ mb: 2 }}><Button variant='outlined' component='label' startIcon={<FileUploadIcon />} sx={{ mb: 2 }}>选择文件<input type='file' hidden accept='.json' onChange={handleFileSelect} /></Button>{importFile && <Typography variant='body2' sx={{ mt: 1 }}>已选择: {importFile.name}</Typography>}</Box>{importError && <Alert severity='error' sx={{ mb: 2 }}>{importError}</Alert>}</DialogContent>
-            <DialogActions sx={{ px: 3, pb: 3 }}><Button onClick={handleCloseImport} variant='outlined'>取消</Button><Button onClick={handleImportData} variant='contained' color='primary' disabled={!importFile || importLoading} startIcon={importLoading ? <CircularProgress size={20} /> : <FileUploadIcon />}>{importLoading ? '导入中...' : '导入'}</Button></DialogActions>
+            <DialogActions sx={{ px: 3, pb: 3 }}><Button onClick={handleCloseCloseImport} variant='outlined'>取消</Button><Button onClick={handleImportData} variant='contained' color='primary' disabled={!importFile || importLoading} startIcon={importLoading ? <CircularProgress size={20} /> : <FileUploadIcon />}>{importLoading ? '导入中...' : '导入'}</Button></DialogActions>
           </Dialog>
 
           <Zoom in={scrollTrigger}><Box onClick={handleScrollTop} role="presentation" sx={{ position: 'fixed', bottom: 80, right: 16, zIndex: 11 }}><Fab color="primary" size="small" aria-label="scroll back to top"><KeyboardArrowUpIcon /></Fab></Box></Zoom>
