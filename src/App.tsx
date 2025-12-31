@@ -544,8 +544,7 @@ function App() {
 
   const handleSaveSiteOrder = async (groupId: number, sites: Site[]) => {
     try {
-      // 修复：确保使用了 groupId，避免 TS 报错
-      console.log('正在保存分组ID为', groupId, '的站点排序'); 
+      console.log('保存站点排序，分组ID:', groupId);
       const siteOrders = sites.map((site, index) => ({
         id: site.id as number,
         order_num: index,
@@ -1036,7 +1035,7 @@ function App() {
           <Dialog open={openImport} onClose={handleCloseImport} maxWidth='sm' fullWidth PaperProps={{ sx: { m: { xs: 2, sm: 'auto' }, width: { xs: 'calc(100% - 32px)', sm: 'auto' } } }}>
             <DialogTitle>导入数据<IconButton aria-label='close' onClick={handleCloseImport} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
             <DialogContent><DialogContentText sx={{ mb: 2 }}>请选择要导入的JSON文件，导入将覆盖现有数据。</DialogContentText><Box sx={{ mb: 2 }}><Button variant='outlined' component='label' startIcon={<FileUploadIcon />} sx={{ mb: 2 }}>选择文件<input type='file' hidden accept='.json' onChange={handleFileSelect} /></Button>{importFile && <Typography variant='body2' sx={{ mt: 1 }}>已选择: {importFile.name}</Typography>}</Box>{importError && <Alert severity='error' sx={{ mb: 2 }}>{importError}</Alert>}</DialogContent>
-            <DialogActions sx={{ px: 3, pb: 3 }}><Button onClick={handleCloseCloseImport} variant='outlined'>取消</Button><Button onClick={handleImportData} variant='contained' color='primary' disabled={!importFile || importLoading} startIcon={importLoading ? <CircularProgress size={20} /> : <FileUploadIcon />}>{importLoading ? '导入中...' : '导入'}</Button></DialogActions>
+            <DialogActions sx={{ px: 3, pb: 3 }}><Button onClick={handleCloseImport} variant='outlined'>取消</Button><Button onClick={handleImportData} variant='contained' color='primary' disabled={!importFile || importLoading} startIcon={importLoading ? <CircularProgress size={20} /> : <FileUploadIcon />}>{importLoading ? '导入中...' : '导入'}</Button></DialogActions>
           </Dialog>
 
           <Zoom in={scrollTrigger}><Box onClick={handleScrollTop} role="presentation" sx={{ position: 'fixed', bottom: 80, right: 16, zIndex: 11 }}><Fab color="primary" size="small" aria-label="scroll back to top"><KeyboardArrowUpIcon /></Fab></Box></Zoom>
