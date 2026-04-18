@@ -1,20 +1,9 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "name": "navihive-xiao",
-"account_id": "0bede43fbca268906a983fed036db18a",
+    "account_id": "0bede43fbca268906a983fed036db18a",
     "main": "worker/index.ts",
-    "compatibility_date": "2025-04-05",
-    "assets": {
-        "not_found_handling": "single-page-application"
-    },
-    "observability": {
-        "enabled": true
-    },
-    // D1数据库绑定
+    "compatibility_date": "2024-04-01", 
     "d1_databases": [
         {
             "binding": "DB",
