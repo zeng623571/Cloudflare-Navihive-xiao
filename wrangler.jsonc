@@ -8,9 +8,6 @@
 "account_id": "0bede43fbca268906a983fed036db18a",
     "main": "worker/index.ts",
     "compatibility_date": "2025-04-05",
-    "assets": {
-        "not_found_handling": "single-page-application"
-    },
     "observability": {
         "enabled": true
     },
